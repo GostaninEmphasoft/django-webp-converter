@@ -9,7 +9,7 @@ register = template.Library()
 
 
 @register.simple_tag(takes_context=True)
-def static_webp(context, static_path, quality=80):
+def static_webp(context, static_path, quality=80, media=False):
     try:
         webp_compatible = context["webp_compatible"]
     except KeyError:
@@ -26,7 +26,7 @@ def static_webp(context, static_path, quality=80):
             static_path=static_path, quality=quality
         )
         if not webp_image.webp_image_exists:
-            webp_image.save_webp_image()
+            webp_image.save_webp_image(media=media)
         webp_image_url = webp_image.webp_url
         cache.set(key, webp_image_url)
     return webp_image_url

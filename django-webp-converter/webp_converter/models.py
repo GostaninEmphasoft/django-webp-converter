@@ -1,12 +1,14 @@
 import io
 import hashlib
 from PIL import Image
+import os
 
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.contrib.staticfiles import finders
 from django.db import models
 from django.utils.encoding import force_bytes
+from django.conf import settings
 
 from webp_converter.conf.settings import WEBP_CONVERTER_PREFIX
 
@@ -29,6 +31,13 @@ class WebPImage(models.Model):
         return full_image_path
 
     @property
+    def media_image_absolute_path(self):
+        full_image_path = os.path.join(settings.BASE_DIR, self.static_path[1:])
+        if not full_image_path:
+            raise IOError("Can't find media image.")
+        return full_image_path
+
+    @property
     def webp_relative_path(self):
         key = hashlib.md5(force_bytes(self.static_path + str(self.quality))).hexdigest()
         return "{prefix}/{key_1}/{key_2}/{path}.webp".format(
@@ -46,8 +55,8 @@ class WebPImage(models.Model):
     def webp_image_exists(self):
         return default_storage.exists(self.webp_relative_path)
 
-    def save_webp_image(self):
-        image = Image.open(self.image_absolute_path)
+    def save_webp_image(self, media=False):
+        image = Image.open(self.media_image_absolute_path if media else self.image_absolute_path)
         image_bytes = io.BytesIO()
         image.save(
             fp=image_bytes,
